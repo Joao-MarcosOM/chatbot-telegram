@@ -1,0 +1,340 @@
+{
+  "name": "Desafio Fase 2 - Bot de Clima no Telegram com N8N",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4eb99115-fa6a-409d-b998-7bd5d9af8a72",
+      "name": "Telegram Trigger",
+      "webhookId": "829dfe94-99b0-47af-9979-dceac3c74cff"
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $('Telegram Trigger').first().json.message.text\n\nfunction run(text){\n  try{\n    let input = text.split(\",\")\n    input[1] = input[1].replace(\" \", \"\")\n    input = input.map((item) => {\n      return item.toLowerCase().normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\")\n    })\n\n    if(input.length > 0){\n      return {\n        items: input,\n        sucesso: true\n      }\n    }\n\n    return {\n        queue: [],\n        sucesso: false\n      }\n  }catch(e){\n    return {\n        queue: [],\n        sucesso: false\n      }\n  }\n}\n\nreturn [run(text)]\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        0
+      ],
+      "id": "887374be-07e8-4f79-8343-d4b6d81b42e0",
+      "name": "Code in JavaScript",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0947f6ac-c21e-4f5f-841a-e8904f574ccf",
+              "leftValue": "={{ $json.sucesso }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        0
+      ],
+      "id": "5fa9fee4-1472-445c-8eb2-1a020be62022",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "❌ Cidade não encontrada. Use o formato CIdade, UF (Ex: São Paulo,SP).",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1312,
+        -96
+      ],
+      "id": "44ec7d14-698e-4e04-8961-6fc9e221d242",
+      "name": "Send Failure Mesage",
+      "webhookId": "9aefc278-a408-42ee-bbb8-01939ad317f0"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🌤️ A temperatura em {{ $('OpenWeatherAPI').item.json.name }} é de {{ $json.formattedTemp }}°C",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        128
+      ],
+      "id": "25dacb71-3d18-465c-b8dd-0e4fb2efc486",
+      "name": "Send success message",
+      "webhookId": "a9a41b06-772e-4cab-a511-d1beb125823b",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.queue }}"
+            },
+            {
+              "name": "units",
+              "value": "metric"
+            },
+            {
+              "name": "lang",
+              "value": "pt_br"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        880,
+        80
+      ],
+      "id": "72ae04be-7baf-4cdd-9f5d-97d9fbc00429",
+      "name": "OpenWeatherAPI",
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ffb81a50-6ba5-4e17-9ced-a4633558321e",
+              "name": "formattedTemp",
+              "value": "={{ $json.main.temp.toFixed(0) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1312,
+        128
+      ],
+      "id": "bf972275-c2ca-4947-b60e-d4f6cf3c17da",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a7d72840-9a26-4ab5-ad24-44b622f56ea4",
+              "leftValue": "={{ $json.cod }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        128
+      ],
+      "id": "780c6397-7207-4750-9f3a-d0b596d4eb66",
+      "name": "Verify API status"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8d25f5f6-ca8c-414a-8dd1-233895c29a8c",
+              "name": "queue",
+              "value": "={{ $json.items[0] }},{{ $json.items[1] }},BR",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        80
+      ],
+      "id": "307c1a79-6725-4853-8be0-d8a011605165",
+      "name": "Define Queue"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send Failure Mesage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Define Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenWeatherAPI": {
+      "main": [
+        [
+          {
+            "node": "Verify API status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Failure Mesage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Send success message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify API status": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Failure Mesage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Queue": {
+      "main": [
+        [
+          {
+            "node": "OpenWeatherAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "45af143b-ce29-48c8-bc21-4ba883f83140",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "56bd2e5a694fa7dbfd1757ac52d091f4fb0c9e220b7a275697f0234fde912964"
+  },
+  "id": "gHrWmtaGZONKlzIN",
+  "tags": [
+    {
+      "updatedAt": "2026-01-24T15:31:56.980Z",
+      "createdAt": "2026-01-24T15:31:56.980Z",
+      "id": "vcZ70JIHwGDBVaG3",
+      "name": "study"
+    }
+  ]
+}
