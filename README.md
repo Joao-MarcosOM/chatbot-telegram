@@ -22,6 +22,9 @@ Se a cidade não for encontrada ou o formato da mensagem estiver incorreto, o bo
 
 ---
 
+<img width="1260" height="953" alt="image" src="https://github.com/user-attachments/assets/634bab46-98d9-4a70-929d-86143c1d4b86" />
+
+
 # 🧠 Como funciona
 
 O workflow no n8n segue o seguinte fluxo:
